@@ -95,20 +95,28 @@ bool rubberBanding = false, bandOn = false;
 void drawFractal() {
 	double z_real = 0;
 	double z_im = 0;
-	double s_real;
-	double s_im;
-	double temp_num;
+	double temp_z;
+
+	double colors[1001][3];
+	// Intialized the value 
+	colors[1000][0] = 0;
+	colors[1000][1] = 0;
+	colors[1000][2] = 0;
+
+	// Initialized 2d array of colors to display
+	for (int j = 0; j <= 1000; j++){
+		colors[j][0] = 130.0;
+		colors[j][1] = 255.0-(0.180*j);
+		colors[j][2] = 255-(0.190*j);
+	}
 
 	int i;
 	for (int u = 0; u <= windowWidth; u++) {
 		for (int v = 0; v <= windowHeight; v++) {
-			s_real = xmin + u*((xmax-xmin)/(windowWidth-1));
-			s_im = ymin + v*((ymax - ymin)/(windowHeight - 1));
-
 			for (i = 1; i <= 1000; i++) {
-				temp_num = z_im;
-				z_im = (2 * z_real * z_im) + s_im;
-				z_real = (z_real*z_real - temp_num*temp_num) + s_real;
+				temp_z = (2 * z_real * z_im) + (ymin + v*((ymax - ymin)/(windowHeight - 1)));
+				z_real = (z_real*z_real - z_im*z_im) + (xmin + u*((xmax-xmin)/(windowWidth-1)));
+				z_im = temp_z;
 
 				if ((z_real*z_real + z_im*z_im) > 4) {
 					break;
@@ -116,20 +124,13 @@ void drawFractal() {
 			}
 
 			glBegin(GL_POINTS);
-			if (i == 1001) {
-				// color it black
-				glColor3f(0.0, 0.0, 0.0);
-			}
-			else {
-				// use i to make a color
-				glColor3f(i, 0.0,i);
-			}
+			glColor3f(colors[i-1][0],colors[i-1][1],colors[i-1][2]);
 			glVertex2i(u, v);
 			glEnd();
 		}
 	}
 	
-	return;
+	glFlush();
 }
 
 

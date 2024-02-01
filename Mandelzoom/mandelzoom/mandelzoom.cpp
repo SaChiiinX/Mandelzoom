@@ -59,6 +59,8 @@ GLfloat* image;
 // Will be dynamically allocated. 
 int** table;
 
+//
+bool redraw;
 
 // Allocate and initialize tables. 
 void initTables(int newW, int newH)
@@ -91,48 +93,79 @@ int xAnchor, yAnchor, xStretch, yStretch;
 bool rubberBanding = false, bandOn = false;
 
 
-// Call back function that draws the image. 
+// Call back function that draws the image.  
 void drawFractal() {
-	double z_real = 0;
-	double z_im = 0;
-	double temp_z;
-
-	double colors[1001][3];
-	// Intialized the value 
-	colors[1000][0] = 0;
-	colors[1000][1] = 0;
-	colors[1000][2] = 0;
-
-	// Initialized 2d array of colors to display
-	for (int j = 0; j <= 1000; j++){
-		colors[j][0] = 130.0;
-		colors[j][1] = 255.0-(0.180*j);
-		colors[j][2] = 255-(0.190*j);
+	if (!redraw){
+		return;
 	}
 
-	int i;
-	for (int u = 0; u <= windowWidth; u++) {
-		for (int v = 0; v <= windowHeight; v++) {
-			for (i = 1; i <= 1000; i++) {
-				temp_z = (2 * z_real * z_im) + (ymin + v*((ymax - ymin)/(windowHeight - 1)));
-				z_real = (z_real*z_real - z_im*z_im) + (xmin + u*((xmax-xmin)/(windowWidth-1)));
-				z_im = temp_z;
+	// Clear the window.
+	glClear(GL_COLOR_BUFFER_BIT);
+	int colors[1000][3] = initColors(new int[1000][3]);
 
-				if ((z_real*z_real + z_im*z_im) > 4) {
-					break;
-				}
-			}
+	double sX;
+	double sY;
 
-			glBegin(GL_POINTS);
-			glColor3f(colors[i-1][0],colors[i-1][1],colors[i-1][2]);
-			glVertex2i(u, v);
-			glEnd();
+	initTables(windowWidth, windowHeight);
+	for (int u = 0; u < windowWidth; u++) {
+		for (int v = 0; v < windowHeight; v++) {
+			sX = (xmin + u*((xmax - xmin)/(windowWidth - 1)));
+			sY = (ymin + v*((ymax - ymin)/(windowHeight - 1)));
+			table[u][v] = convergenceIndex(sX,sY);
 		}
 	}
-	
+	updateImage(colors);
+	restoreImage();
+	redraw = false;
 	glFlush();
 }
 
+int convergenceIndex(double sX, double sY) {
+	int i;
+	double x = 0.0;
+	double y = 0.0;
+	double tempx;
+	for(i = 1; i <= 1000; i++){
+		tempx = x*x-y*y + sX;
+		y = 2*x*y + sY;
+		x = tempx;
+		if((x*x + y*y) > 4){
+			break;
+		}
+	}
+	return i--;
+}
+
+int* initColors(int* colors){
+	for(int i = 0; i < 1000; i++){
+		colors[i][0] = 255.0;
+		colors[i][1] = 255.0;
+		colors[i][2] = 255.0;
+
+		/* image[i]= 130.0;
+		image[i + 1]= 255.0 - (0.180 * i);
+		image[i + 2]= 255.0 - (0.190 * i);		
+		*/
+ 	}
+
+	colors[1000][0]= 0.0;
+	colors[1000][1]= 0.0;
+	colors[1000][2]= 0.0;
+	return colors;
+}
+
+void updateImage(int* colors) {
+	int colorIndex;
+
+	for (int i = 0; i < windowWidth; i++) {
+		for(int j = 0; j < windowHeight; j++){
+			colorIndex = table[i][j];
+			image[i*windowWidth+j] = colors[colorIndex][0];
+			image[i*windowWidth+j+1] = colors[colorIndex][1];
+			image[i*windowWidth+j+2] = colors[colorIndex][2];
+		}
+	}
+}
 
 void reshape(int w, int h)
 // Callback for processing reshape events.
@@ -143,6 +176,7 @@ void reshape(int w, int h)
 		initTables(w, h);
 		windowWidth = w;
 		windowHeight = h;
+		redraw = true;
 	}
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 	glMatrixMode(GL_PROJECTION);
@@ -235,6 +269,14 @@ void mouse(int button, int state, int x, int y)
 		{
 			// Remove the rubber band currently on the screen. 
 			drawRubberBand(xAnchor, yAnchor, xStretch, yStretch);
+			/* xmin = xAnchor
+			xmax = xStretch
+			ymin = yAnchor
+			ymax = yStretch
+
+			redraw = true;
+			drawFractal();
+			*/
 			bandOn = false;
 			rubberBanding = false;
 			glutPostRedisplay();
@@ -288,6 +330,8 @@ int main(int argc, char* argv[])
 
 	windowWidth = 400;
 	windowHeight = 400;
+
+	redraw = true;
 
 	// Initialize the dynamically allocated tables after
 	// main function has begun. 

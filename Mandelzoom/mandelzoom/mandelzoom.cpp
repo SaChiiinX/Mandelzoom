@@ -1,7 +1,7 @@
 /*-------------------------------------------------------*/
-/*  CS-378                  Computer Graphics              Tom Ellman    */
+/*  CS-378                  Computer Graphics              Tom Ellman    */
 /*-----------------------------------------------------------------------*/
-/*  mandelzoom.cpp   Draw a picture of the Mandelbrot set.               */
+/*  mandelzoom.cpp   Draw a picture of the Mandelbrot set.               */
 /*-----------------------------------------------------------------------*/
 
 #include <cstdlib>
@@ -32,8 +32,8 @@ struct rectangle
 
 // Data structure tosave history of regions viewed.
 // Statically allocated and initialized at start up.
-list<rectangle*>  rectList;
-list<rectangle*>::iterator  rectListIter;
+list<rectangle*>  rectList;
+list<rectangle*>::iterator  rectListIter;
 
 // Variables represeting the view region requested by user.
 double xmin, xmax, ymin, ymax;
@@ -58,9 +58,6 @@ GLfloat* image;
 // each complex number in the selected region.
 // Will be dynamically allocated. 
 int** table;
-
-//
-bool redraw;
 
 // Allocate and initialize tables. 
 void initTables(int newW, int newH)
@@ -92,79 +89,82 @@ int xAnchor, yAnchor, xStretch, yStretch;
 // Variables for use in rubberbanding.
 bool rubberBanding = false, bandOn = false;
 
-
-// Call back function that draws the image.  
-void drawFractal() {
-	if (!redraw){
-		return;
-	}
-
-	// Clear the window.
-	glClear(GL_COLOR_BUFFER_BIT);
-	int colors[1000][3] = initColors(new int[1000][3]);
-
-	double sX;
-	double sY;
-
-	initTables(windowWidth, windowHeight);
-	for (int u = 0; u < windowWidth; u++) {
-		for (int v = 0; v < windowHeight; v++) {
-			sX = (xmin + u*((xmax - xmin)/(windowWidth - 1)));
-			sY = (ymin + v*((ymax - ymin)/(windowHeight - 1)));
-			table[u][v] = convergenceIndex(sX,sY);
+// Intializes the colors depending on how close a pixel is to the madelbrot set
+void initColors(rgbType *colors){
+	int i;
+	for(i = 0; i < 1000; i++){
+		if (i < 300){
+			colors[i] = rgbType(255.0,255.0,255.0);
+		}else if (i < 500){
+			colors[i] = rgbType(0.0,255.0,0.0);
+		}else if (i < 700){
+			colors[i] = rgbType(0.0,0.0,255.0);
+		}else{
+			colors[i] = rgbType(255.0,0.0,0.0);
 		}
 	}
-	updateImage(colors);
-	restoreImage();
-	redraw = false;
-	glFlush();
+	colors[i] = rgbType();
 }
 
+// Determines whether the pixel is in the madelbrot set and how close it is
 int convergenceIndex(double sX, double sY) {
 	int i;
 	double x = 0.0;
 	double y = 0.0;
 	double tempx;
-	for(i = 1; i <= 1000; i++){
-		tempx = x*x-y*y + sX;
-		y = 2*x*y + sY;
+	for (i = 1; i <= 1000; i++) {
+		tempx = x * x - y * y + sX;
+		y = 2 * x * y + sY;
 		x = tempx;
-		if((x*x + y*y) > 4){
+		if ((x * x + y * y) > 4) {
 			break;
 		}
 	}
-	return i--;
+	return i;
 }
 
-int* initColors(int* colors){
-	for(int i = 0; i < 1000; i++){
-		colors[i][0] = 255.0;
-		colors[i][1] = 255.0;
-		colors[i][2] = 255.0;
-
-		/* image[i]= 130.0;
-		image[i + 1]= 255.0 - (0.180 * i);
-		image[i + 2]= 255.0 - (0.190 * i);		
-		*/
- 	}
-
-	colors[1000][0]= 0.0;
-	colors[1000][1]= 0.0;
-	colors[1000][2]= 0.0;
-	return colors;
-}
-
-void updateImage(int* colors) {
+void updateImage(rgbType* colors) {
 	int colorIndex;
-
 	for (int i = 0; i < windowWidth; i++) {
-		for(int j = 0; j < windowHeight; j++){
+		for (int j = 0; j < windowHeight; j++) {
 			colorIndex = table[i][j];
-			image[i*windowWidth+j] = colors[colorIndex][0];
-			image[i*windowWidth+j+1] = colors[colorIndex][1];
-			image[i*windowWidth+j+2] = colors[colorIndex][2];
+
+			image[3*(i * windowWidth + j)] = colors[colorIndex].red;
+			image[3*(i * windowWidth + j + 1)] = colors[colorIndex].green;
+			image[3*(i * windowWidth + j + 2)] = colors[colorIndex].blue;
 		}
 	}
+}
+
+// Call back function that draws the image.  
+void drawFractal() {
+	if (!recompute) {
+		return;
+	}
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// intializes memory for array of rgb types
+	rgbType* colors = malloc(1001 * rgbType);
+	// intializes all possible colors in the window
+	initColors(colors);
+
+	double sX;
+	double sY;
+
+	initTables(windowWidth, windowHeight);
+
+	for (int u = 0; u < windowWidth; u++) {
+		for (int v = 0; v < windowHeight; v++) {
+			sX = (xmin + u * ((xmax - xmin) / (windowWidth - 1)));
+			sY = (ymin + v * ((ymax - ymin) / (windowHeight - 1)));
+			table[u][v] = convergenceIndex(sX, sY);
+		}
+	}
+
+	updateImage(colors);
+	glFlush();
+	recompute = false;
 }
 
 void reshape(int w, int h)
@@ -172,11 +172,24 @@ void reshape(int w, int h)
 {
 	if (w > 0 && h > 0 && (w != windowWidth || h != windowHeight))
 	{
+		double xMid = (xmin - xmax)/2.0;
+		double yMid = (ymin - ymax)/2.0;
+
+		double xPix = w / 2;
+		double yPix = h / 2;
+
+		double pixPerX = windowWidth/(abs(xmin) + abs(xmax));
+		double pixPerY = windowHeight / (abs(ymin) + abs(ymax));
 		deleteTables();
 		initTables(w, h);
 		windowWidth = w;
 		windowHeight = h;
-		redraw = true;
+
+		xmin = (xMid - xPix)/pixPerX;
+		xmax = (xMid + xPix)/pixPerX;
+		ymin = (yMid - yPix)/pixPerY;
+		ymax = (yMid + yPix)/pixPerY;
+		recompute = true;
 	}
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 	glMatrixMode(GL_PROJECTION);
@@ -269,14 +282,38 @@ void mouse(int button, int state, int x, int y)
 		{
 			// Remove the rubber band currently on the screen. 
 			drawRubberBand(xAnchor, yAnchor, xStretch, yStretch);
-			/* xmin = xAnchor
-			xmax = xStretch
-			ymin = yAnchor
-			ymax = yStretch
+			double xRatio = windowWidth / (xmax - xmin);
+			double yRatio = windowHeight / (ymax - ymin);
+			double maxX = max(xAnchor, xStretch);
+			double minX = min(xAnchor, xStretch);
+			double maxY = max(yAnchor, yStretch);
+			double minY = min(yAnchor, yStretch);
+			double xd = maxX - minX;
+			double yd = maxY - minY;
+			double aR = yd / xd;
+			double aW = windowHeight/windowWidth;
 
-			redraw = true;
-			drawFractal();
-			*/
+			if (aR == aW) {
+				xmin = minX/xRatio;
+				xmax = maxX / xRatio;
+				ymin = minY/yRatio;
+				ymax = maxY / yRatio;
+			}
+			else if (aR > aW) {
+				double newXD = ((yd / aW) - xd)/2;
+				xmin = (minX - newXD) / xRatio;
+				xmax = (maxX + newXD) / xRatio;
+				ymin = minY / yRatio;
+				ymax = maxY / yRatio;
+			}
+			else {
+				double newYD = (aW * xd - yd) /2;
+				xmin = minX / xRatio;
+				xmax = maxX / xRatio;
+				ymin = (minY - newYD) / yRatio;
+				ymax = (maxY + newYD) / yRatio;
+			}
+			recompute = true;
 			bandOn = false;
 			rubberBanding = false;
 			glutPostRedisplay();
@@ -331,8 +368,6 @@ int main(int argc, char* argv[])
 	windowWidth = 400;
 	windowHeight = 400;
 
-	redraw = true;
-
 	// Initialize the dynamically allocated tables after
 	// main function has begun. 
 	initTables(windowWidth, windowHeight);
@@ -380,5 +415,4 @@ int main(int argc, char* argv[])
 	glutMainLoop();
 
 	return 0;
-
 }

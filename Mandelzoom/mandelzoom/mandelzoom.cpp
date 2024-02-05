@@ -284,8 +284,7 @@ void mouse(int button, int state, int x, int y)
 		{
 			// Remove the rubber band currently on the screen. 
 			drawRubberBand(xAnchor, yAnchor, xStretch, yStretch);
-			double xRatio = windowWidth / (xmax - xmin);
-			double yRatio = windowHeight / (ymax - ymin);
+			glClear(GL_COLOR_BUFFER_BIT);
 			double maxX = max(xAnchor, xStretch);
 			double minX = min(xAnchor, xStretch);
 			double maxY = max(yAnchor, yStretch);
@@ -294,27 +293,36 @@ void mouse(int button, int state, int x, int y)
 			double yd = maxY - minY;
 			double aR = yd / xd;
 			double aW = windowHeight/windowWidth;
+			double buffer;
 
-			if (aR == aW) {
-				xmin = minX/xRatio;
-				xmax = maxX / xRatio;
-				ymin = minY/yRatio;
-				ymax = maxY / yRatio;
-			}
-			else if (aR > aW) {
-				double newXD = ((yd / aW) - xd)/2;
-				xmin = (minX - newXD) / xRatio;
-				xmax = (maxX + newXD) / xRatio;
-				ymin = minY / yRatio;
-				ymax = maxY / yRatio;
+			if (aR > aW) {
+				ymin = yAnchor/windowHeight;
+				ymax = yStretch/windowHeight;
+				// Offset for x to match aspect ratio
+				buffer = (yd/aW) - xd;
+				if(xStretch < xAnchor){
+					xmin = (xStretch - buffer)/windowWidth;
+					xmax = xAnchor/windowWidth;
+				}else{
+					xmax = (xStretch + buffer)/windowWidth;
+					xmin = xAnchor/windowWidth;
+				}
 			}
 			else {
-				double newYD = (aW * xd - yd) /2;
-				xmin = minX / xRatio;
-				xmax = maxX / xRatio;
-				ymin = (minY - newYD) / yRatio;
-				ymax = (maxY + newYD) / yRatio;
+				xmin = xAnchor/windowWidth;
+				xmax = xAnchor/windowWidth;
+				// Offset for y to match aspect ratio
+				buffer = (aW*xd) - yd;
+
+				if(yStretch < yAnchor){
+					ymin = (yStretch - buffer)/windowHeight;
+					ymax = yAnchor/windowHeight;
+				}else{
+					ymax = (yStretch + buffer)/windowHeight;
+					ymin = yStretch/windowHeight;
+				}
 			}
+			cout << "region" << xmin << ", " << xmax << ", " << ymin ", " << ymax << "\n";
 			recompute = true;
 			bandOn = false;
 			rubberBanding = false;

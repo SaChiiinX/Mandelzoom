@@ -136,6 +136,8 @@ void updateImage(rgbType* colors) {
 	}
 }
 
+void restoreImage()
+
 // Call back function that draws the image.  
 void drawFractal() {
 	if (!recompute) {
@@ -172,14 +174,14 @@ void reshape(int w, int h)
 {
 	if (w > 0 && h > 0 && (w != windowWidth || h != windowHeight))
 	{
-		double xMid = (xmin - xmax)/2.0;
-		double yMid = (ymin - ymax)/2.0;
+		double xMid = (xmin + xmax)/2.0;
+		double yMid = (ymin + ymax)/2.0;
 
 		double xPix = w / 2;
 		double yPix = h / 2;
 
-		double pixPerX = windowWidth/(abs(xmin) + abs(xmax));
-		double pixPerY = windowHeight / (abs(ymin) + abs(ymax));
+		double pixPerX = windowWidth/(xmax-xmin);
+		double pixPerY = windowHeight/(ymax-ymin);
 		deleteTables();
 		initTables(w, h);
 		windowWidth = w;

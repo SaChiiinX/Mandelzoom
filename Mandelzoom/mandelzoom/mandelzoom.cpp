@@ -94,16 +94,16 @@ void initColors(rgbType *colors){
 	int i;
 	for(i = 0; i < 1000; i++){
 		if (i < 300){
-			colors[i] = rgbType(255.0,255.0,255.0);
+			colors[i] = new rgbType(255.0,255.0,255.0);
 		}else if (i < 500){
-			colors[i] = rgbType(0.0,255.0,0.0);
+			colors[i] = new rgbType(0.0,255.0,0.0);
 		}else if (i < 700){
-			colors[i] = rgbType(0.0,0.0,255.0);
+			colors[i] = new rgbType(0.0,0.0,255.0);
 		}else{
-			colors[i] = rgbType(255.0,0.0,0.0);
+			colors[i] = new rgbType(255.0,0.0,0.0);
 		}
 	}
-	colors[i] = rgbType();
+	colors[i] = new rgbType();
 }
 
 // Determines whether the pixel is in the madelbrot set and how close it is
@@ -275,6 +275,7 @@ void mouse(int button, int state, int x, int y)
 			drawRubberBand(xAnchor, yAnchor, xStretch, yStretch);
 			bandOn = true;
 			rubberBanding = true;
+			rectList.push_front(new rectangle(xmin,xmax,ymin,ymax));
 			break;
 		}
 	}
@@ -337,11 +338,32 @@ void mouse(int button, int state, int x, int y)
 void mainMenu(int item)
 // Callback for processing main menu.
 {
+	double curSize = (xmax - xmin)*(ymax-ymin);
+	rectangle tempRec = malloc(sizeof(rectangle));
 	switch (item)
 	{
 	case 1: // Push
+
+	for (rectListIter = rectList.begin(); it != rectList.end(); rectListIter++) {
+		tempRec = *rectListIter;
+		if(curSize>((tempRec.xmax - tempRec.xmin)*(tempRec.ymax-tempRec.ymin))){
+			xmax = tempRec.xmax;
+			xmin = tempRec.xmin;
+			ymax = tempRec.ymax;
+			ymin = tempRec.ymin;
+		}
+    }
 		break;
 	case 2: // Pop
+	for (rectListIter = rectList.begin(); it != rectList.end(); rectListIter++) {
+		tempRec = *rectListIter;
+		if(curSize<((tempRec.xmax - tempRec.xmin)*(tempRec.ymax-tempRec.ymin))){
+			xmax = tempRec.xmax;
+			xmin = tempRec.xmin;
+			ymax = tempRec.ymax;
+			ymin = tempRec.ymin;
+		}
+    }
 		break;
 	case 3: std::exit(0);
 	}

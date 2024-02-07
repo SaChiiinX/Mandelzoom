@@ -149,13 +149,12 @@ void restoreImage();
 void saveImage();
 // Call back function that draws the image. 
 void drawFractal() {
+	glClear(GL_COLOR_BUFFER_BIT);
 	if (!recompute) {
 		restoreImage();
 		glFlush();
 		return;
 	}
-
-	//glClear(GL_COLOR_BUFFER_BIT);
 
 	// intializes memory for array of rgb types
 	rgbType colors[1001];
@@ -304,25 +303,32 @@ void mouse(int button, int state, int x, int y)
 			double maxY = max(yAnchor, yStretch);
 			double minY = min(yAnchor, yStretch);
 
+			// Complex plane ratio
 			double xd = maxX-minX;
 			double yd = maxY-minY;
 
+			// Screen ratio
 			double aW = (double) windowHeight / windowWidth;
 
+			// Used to scale the new values given
 			double xd1 = xmax - xmin;
 			double yd1 = ymax - ymin;
 
+			// Variables for center of the drawn rubberband
+			// 			 additional complex plane numbers so aspect ratio is maintained
 			double center;
 			double buffer;
 
+			// New height needs to be larger
 			if (yd/xd < aW) {
 				xmax = ((double)maxX/windowWidth)*xd1+xmin;
-				xmin = ((double)minX/windowWidth)*xd1+xmin;
+				xmin = ((double)minX/windowWidth)*xd1+xmin; 
 				center = ((double)(yAnchor + yStretch) / (windowHeight*2)) * yd1 + ymin;
 				buffer = (double) (xmax-xmin)*aW / 2;
 				ymin = center - buffer;
 				ymax = center + buffer;
-			}
+			} 
+			// New Width needs to be larger
 			else {
 				ymax = ((double)maxY / windowHeight) * yd1 + ymin;
 				ymin = ((double)minY / windowHeight) * yd1 + ymin;
@@ -334,10 +340,21 @@ void mouse(int button, int state, int x, int y)
 
 			}
 
+			// If there are elements after iterator remove them
+			if (rectListIter != rectList.end()){
+				tempIter = rectList.end();
+				rectList.erase(rectListIter, tempIter);
+			}
+			
+			// Adds rectangle to the list then points to it
+			rectList.push_back(new rectangle(xmin, ymin, xmax, ymax));
+			rectListIter++;
+
 			recompute = true;
 			glutPostRedisplay();
-			break;
+			break; 
 		}
+		
 	}
 	}
 }
@@ -349,9 +366,20 @@ void mainMenu(int item)
 	switch (item)
 	{
 	case 1: // Push
-
+		rectListIter++;
+		rectangle tempRec = *rectListIter;
+		xmin = tempRec.xmin;
+		xmax = tempRec.xmax;
+		ymin = tempRec.ymin;
+		ymax = tempRec.ymax;
 		break;
 	case 2: // Pop
+		rectListIter--;
+		rectangle temp Rec = *rectListIter;
+		xmin = tempRec.xmin;
+		xmax = tempRec.xmax;
+		ymin = tempRec.ymin;
+		ymax = tempRec.ymax;
 		break;
 	case 3: std::exit(0);
 	}

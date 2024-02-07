@@ -1,0 +1,45 @@
+Subject:
+             Mandelzoom: Rectangle Aspect Ratios
+
+Hi Folks,
+
+I am writing to address an issue that will arise as you implement your
+mandelzoom programs.
+
+At any given time the user will have requested to see some rectangle
+in the complex plane, defined by (x1,y1) and (x2,y2). (These numbers
+could have come from the command line, or from mouse clicks by the
+user.)  Let xd = x2-x1 and let yd = y2-y1. Then the user has requested
+a rectangle with "aspect ratio" Ar = yd/xd.  Likewise, at any given
+time, the window on the screen will have a width xs and a height
+ys. The aspect ratio of the window is Aw = ys/xs. If Ar = Aw then the
+rectangle can be displayed in the window without distortion; however,
+if Ar<>Aw, any attempt to fill the window with an image of the
+rectangle will present a distoryed view of the true image. You must
+find a way to avoid this distortion. Here is what you should do:
+
+1. If Ar = Aw, there is no problem. The two aspect ratios are the
+same. The rectangle requested by the user can exactly fill the window
+without padding or distortion. You can just draw the image in the
+window, using the formula in the assignment handout for computing s =
+x + iy from u, v, x1, x2, y1, y2, xs, ys.
+
+2. If Ar <> Aw, you should enlarge the requested rectangle so that Ar
+= Aw before you display the image. Furthermore, you should make sure
+that (a) the center of the enlarged rectangle is the same as the
+center the requested rectangle; (b) the enlarged rectangle contains
+the requested rectangle; (c) the enlarged rectangle is as small as
+possible:
+
+- If Ar > Aw, then xd needs to be made bigger, by making x1 smaller
+  and x2 larger.
+
+- If Ar < Aw, then yd needs to be made bigger, by making y1 smaller
+  and y2 larger.
+
+Once you have changed either x1 and x2 or y1 and y2 so that Ar = Aw,
+you can just draw the image as you would have if the original aspect
+ratios had been the same, i.e., using the formula in the assignment
+handout for computing s = x + iy from u, v, x1, x2, y1, y2, xs, ys.
+
+Tom Ellman

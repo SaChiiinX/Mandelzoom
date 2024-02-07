@@ -1,0 +1,24 @@
+Subject: 
+            Mandelzoom: Efficiency and Testing
+
+
+Hi Folks, 
+
+I am writing to send you tips about writing your "mandelzoom" programs:
+
+1. There are two things you should do to make your program efficient.
+First, as your program computes the color of each point in the window,
+it should store the color in an array. Each time you redraw the image,
+the program will use the array of precomputed colors, and will not go
+through the long process of recomputing the color of each point. Of
+course, whenever the user changes the region of the complex plane being
+viewed, your program will recompute all of the colors. Second, try to
+avoid using the square root function in the <cmath> library.  It's
+computationally expensive and you don't need it.
+
+2. Once you get your program running, test it using the parameters:
+xMin = -2.0, xMax = 0.5 yMin = -1.25 yMax = 1.25 xs = 400 ys = 400". 
+Your image should look like the image in the file "mandelbrot.gif" 
+on the class web page, perhaps with different colors.
+
+Tom Ellman

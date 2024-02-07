@@ -1,0 +1,26 @@
+Subject: 
+            Mandelzoom: Command Line Arguments
+
+Hi Folks, 
+
+Some of you may wonder how to get command line arguments into the mandelzoom program. 
+
+First you use select your Mandelzoom project in Visual Studio. Then
+press and hold RMB on the project name and select Properties. I the
+Debugging properties, find the Command arguments slot and enter your
+parameters x1, x2, y1, y2, w, h there.
+
+At the start of your main program, you should put some code to process these arguments, for example: 
+
+main(int argc, char *argv[])
+{
+   float x1 = atof(argv[1]);
+   float x2 = atof(argv[2]);
+   float y1 = atof(argv[3]);
+   float y2 = atof(argv[4]);
+   int xs = atoi(argv[5]);
+   int ys = atoi(argv[6]);
+   // ... Etc. ...
+}
+
+Tom Ellman

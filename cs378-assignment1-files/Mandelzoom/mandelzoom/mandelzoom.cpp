@@ -307,7 +307,7 @@ void mouse(int button, int state, int x, int y)
 			double xd = maxX-minX;
 			double yd = maxY-minY;
 
-			// Screen ratio
+			// Screen ratio 
 			double aW = (double) windowHeight / windowWidth;
 
 			// Used to scale the new values given

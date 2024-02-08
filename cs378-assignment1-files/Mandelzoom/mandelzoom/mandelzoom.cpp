@@ -32,8 +32,8 @@ struct rectangle
 
 // Data structure tosave history of regions viewed.
 // Statically allocated and initialized at start up.
-list<rectangle*>  rectList;
-list<rectangle*>::iterator  rectListIter;
+list<rectangle*> rectList;
+list<rectangle*>::iterator rectListIter;
 
 // Variables represeting the view region requested by user.
 double xmin, xmax, ymin, ymax;
@@ -95,19 +95,20 @@ void initColors(rgbType* colors) {
 	int i;
 	for (i = 0; i < 1000; i++) {
 		if (i < 10) {
-			colors[i] = rgbType(255.0, 255.0, 255.0);
-		}
-		else if (i < 75) {
-			colors[i] = rgbType(0.0, 85.0, 0.0);
-		}
-		else if (i < 150) {
-			colors[i] = rgbType(0.0, 0.0, 255.0);
-		}
-		else {
-			colors[i] = rgbType(255.0, 0.0, 0.0);
-		}
-	}
-	colors[i] = rgbType();
+            colors[i] = rgbType(255.0, 255.0, 255.0); // White for very fast convergence
+        } else if (i < 200) {
+            // Interpolate between green and blue based on convergence index
+            colors[i] = rgbType(0.0, 255.0 * (1.0 - i), 255.0 * i);
+        } else if (i < 400) {
+            // Interpolate between blue and red based on convergence index
+            colors[i] = rgbType(255.0 * (i - 0.2), 0.0, 255.0 * (1.0 - (i - 0.2)));
+        } else if (i < 800) {
+            // Interpolate between red and yellow
+            colors[i] = rgbType(255.0, 255.0 * (i - 0.4), 0.0);
+        } else {
+            // Interpolate between yellow and black
+            colors[i] = rgbType(255.0 * (1.0 - i), 255.0 * (1.0 - i), 0.0);
+        }
 }
 
 // Determines whether the pixel is in the madelbrot set and how close it is
@@ -124,7 +125,7 @@ int convergenceIndex(double sX, double sY) {
 			break;
 		}
 	}
-	return i;
+	return --i;
 }
 
 void updateImage(rgbType* colors) {
@@ -188,18 +189,18 @@ void reshape(int w, int h)
 		double dw = w - windowWidth;
 		double dh = h - windowHeight;
 
-		double dx = dw/windowWidth*(xmax-xmin);
-		double dy = dh/windowHeight*(ymax-ymin);
+		double dx = dw / windowWidth * (xmax - xmin);
+		double dy = dh / windowHeight * (ymax - ymin);
 
 		deleteTables();
 		initTables(w, h);
 		windowWidth = w;
 		windowHeight = h;
 
-		xmin = xmin-dx/2;
-		xmax = xmax+dx/2;
-		ymin = ymin-dy/2;
-		ymax = ymax+dy/2;
+		xmin = xmin - dx / 2;
+		xmax = xmax + dx / 2;
+		ymin = ymin - dy / 2;
+		ymax = ymax + dy / 2;
 		recompute = true;
 		glutPostRedisplay();
 	}
@@ -304,11 +305,11 @@ void mouse(int button, int state, int x, int y)
 			double minY = min(yAnchor, yStretch);
 
 			// Complex plane ratio
-			double xd = maxX-minX;
-			double yd = maxY-minY;
+			double xd = maxX - minX;
+			double yd = maxY - minY;
 
 			// Screen ratio 
-			double aW = (double) windowHeight / windowWidth;
+			double aW = (double)windowHeight / windowWidth;
 
 			// Used to scale the new values given
 			double xd1 = xmax - xmin;
@@ -320,20 +321,20 @@ void mouse(int button, int state, int x, int y)
 			double buffer;
 
 			// New height needs to be larger
-			if (yd/xd < aW) {
-				xmax = ((double)maxX/windowWidth)*xd1+xmin;
-				xmin = ((double)minX/windowWidth)*xd1+xmin; 
-				center = ((double)(yAnchor + yStretch) / (windowHeight*2)) * yd1 + ymin;
-				buffer = (double) (xmax-xmin)*aW / 2;
+			if (yd / xd < aW) {
+				xmax = ((double)maxX / windowWidth) * xd1 + xmin;
+				xmin = ((double)minX / windowWidth) * xd1 + xmin;
+				center = ((double)(yAnchor + yStretch) / (windowHeight * 2)) * yd1 + ymin;
+				buffer = (double)(xmax - xmin) * aW / 2;
 				ymin = center - buffer;
 				ymax = center + buffer;
-			} 
+			}
 			// New Width needs to be larger
 			else {
 				ymax = ((double)maxY / windowHeight) * yd1 + ymin;
 				ymin = ((double)minY / windowHeight) * yd1 + ymin;
 				center = ((double)(xAnchor + xStretch) / (windowWidth * 2)) * xd1 + xmin;
-				buffer = (double)(ymax-ymin) / (aW * 2);
+				buffer = (double)(ymax - ymin) / (aW * 2);
 
 				xmin = center - buffer;
 				xmax = center + buffer;
@@ -341,20 +342,16 @@ void mouse(int button, int state, int x, int y)
 			}
 
 			// If there are elements after iterator remove them
-			if (rectListIter != rectList.end()){
-				tempIter = rectList.end();
-				rectList.erase(rectListIter, tempIter);
+			if(rectListIter != rectList.end()){
+				rectListIter = rectList.erase(rectListIter, rectListIter.end())
 			}
-			
-			// Adds rectangle to the list then points to it
-			rectList.push_back(new rectangle(xmin, ymin, xmax, ymax));
-			rectListIter++;
 
+			rectList.push_back(new rectangle(xmin, ymin, xmax, ymax));
 			recompute = true;
 			glutPostRedisplay();
-			break; 
+			break;
 		}
-		
+
 	}
 	}
 }
@@ -363,26 +360,36 @@ void mouse(int button, int state, int x, int y)
 void mainMenu(int item)
 // Callback for processing main menu.
 {
+	rectangle* tempRec;
 	switch (item)
 	{
 	case 1: // Push
-		rectListIter++;
-		rectangle tempRec = *rectListIter;
-		xmin = tempRec.xmin;
-		xmax = tempRec.xmax;
-		ymin = tempRec.ymin;
-		ymax = tempRec.ymax;
+		if (++rectListIter != rectList.end()) {
+			tempRec = *rectListIter;
+			xmin = tempRec->xmin;
+			xmax = tempRec->xmax;
+			ymin = tempRec->ymin;
+			ymax = tempRec->ymax;
+		}else{
+			rectListIter--;
+		}
 		break;
 	case 2: // Pop
-		rectListIter--;
-		rectangle temp Rec = *rectListIter;
-		xmin = tempRec.xmin;
-		xmax = tempRec.xmax;
-		ymin = tempRec.ymin;
-		ymax = tempRec.ymax;
+		if (!(rectListIter == rectList.begin())) {
+			rectListIter--;
+			tempRec = *rectListIter;
+			xmin = tempRec->xmin;
+			xmax = tempRec->xmax;
+			ymin = tempRec->ymin;
+			ymax = tempRec->ymax;
+		}
+		
 		break;
 	case 3: std::exit(0);
 	}
+
+	recompute = true;
+	glutPostRedisplay();
 }
 
 void setMenu()
@@ -415,7 +422,6 @@ int main(int argc, char* argv[])
 	// to reference the first and only rectangle on the list. 
 	rectList.push_front(new rectangle(xmin, ymin, xmax, ymax));
 	rectListIter = rectList.begin();
-
 
 	// Mask floating point exceptions.
 	_control87(MCW_EM, MCW_EM);

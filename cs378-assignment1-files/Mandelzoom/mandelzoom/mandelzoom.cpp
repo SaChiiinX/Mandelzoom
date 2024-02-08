@@ -347,6 +347,7 @@ void mouse(int button, int state, int x, int y)
 			}
 
 			rectList.push_back(new rectangle(xmin, ymin, xmax, ymax));
+			rectListIter++;
 			recompute = true;
 			glutPostRedisplay();
 			break;
